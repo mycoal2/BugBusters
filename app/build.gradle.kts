@@ -1,5 +1,6 @@
 plugins {
     id("com.android.application")
+    id("com.google.secrets_gradle_plugin")  version "0.4"
 }
 
 android {
@@ -33,10 +34,12 @@ android {
 
 dependencies {
     implementation("com.airbnb.android:lottie:6.3.0")
+    implementation ("com.google.android.gms:play-services-maps:17.0.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.10.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+
 }
