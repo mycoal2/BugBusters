@@ -4,12 +4,12 @@ plugins {
 
 android {
     namespace = "com.example.bugbustersproject"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.bugbustersproject"
         minSdk = 29
-        targetSdk = 33
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
@@ -32,7 +32,7 @@ android {
 }
 
 dependencies {
-
+    implementation("com.airbnb.android:lottie:6.3.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.10.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
