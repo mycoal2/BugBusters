@@ -1,7 +1,8 @@
 plugins {
     id("com.android.application")
-    id("com.google.secrets_gradle_plugin")  version "0.4"
+    //id("com.google.secrets_gradle_plugin")  version "0.4"
     id("com.google.gms.google-services")
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
 }
 
 android {
