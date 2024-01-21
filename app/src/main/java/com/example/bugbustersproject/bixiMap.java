@@ -1,6 +1,9 @@
 package com.example.bugbustersproject;
 import static com.android.volley.VolleyLog.TAG;
 
+import static java.lang.Math.PI;
+import static java.lang.Math.cos;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -25,6 +28,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -45,6 +49,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -129,10 +134,47 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                         if (addressList != null && !addressList.isEmpty()) {
                             Log.d("TEST", "TESTST");
                             address = addressList.get(0);
-
+                            Log.d("TEST123", "hello " + address);
                             // Check if the address is not null before using it
                             if (address != null) {
                                 LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
+                                Log.d("TEST234", "LAT - " + address.getLatitude() + " long - " + address.getLongitude());
+                                double latRange = calculateLatBounds(250);
+                                double longRange = calculateLongBounds(250);
+                                double latUpperBound = address.getLatitude() + latRange;
+                                double latLowerBound = address.getLatitude() - latRange;
+                                double longUpperBound = address.getLongitude() + longRange;
+                                double longLowerBound = address.getLongitude() - longRange;
+
+                                db.collection("STATION_REF")
+                                        .whereGreaterThanOrEqualTo("lat", latLowerBound).whereLessThan("lat", latUpperBound).get()
+//                                        .whereGreaterThanOrEqualTo("lon", longLowerBound).whereLessThan("lon", longUpperBound).get()
+                                        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                                            @Override
+                                            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                                                if (task.isSuccessful()) {
+                                                    // Handle the results for latitude query
+                                                    List<DocumentSnapshot> latResults = task.getResult().getDocuments();
+
+                                                    List<DocumentSnapshot> filteredResults = new ArrayList<>();
+
+                                                    for (DocumentSnapshot doc : latResults) {
+                                                        double lon = doc.getDouble("lon");
+                                                        if (lon > longLowerBound && lon < longUpperBound) {
+                                                            // Document satisfies both latitude and longitude conditions
+                                                            filteredResults.add(doc);
+                                                        }
+                                                    }
+                                                    for (DocumentSnapshot document : filteredResults) {
+                                                        Log.d("TEST4444", document.getId() + " => " + document.getData());
+                                                    }
+                                                } else {
+                                                    Log.w("55555", "Error getting documents.", task.getException());
+                                                }
+                                            }
+                                        });
+
+                                Log.d("test123", "db firestore");
                                 myGoogleMap.addMarker(new MarkerOptions().position(latLng).title("Concordia"));
                                 myGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10));
                             } else {
@@ -227,6 +269,23 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                 });
             }
         });
+    }
+
+    private double calculateLatBounds(int distance) {
+
+        // new_latitude  = latitude  + (dy / r_earth) * (180 / pi);
+        // r_earth = 6378km = 6378 000m
+        double r_earth = 6378000;
+        double latBound = (distance/r_earth) * (180/PI);
+        return latBound;
+    }
+
+    private double calculateLongBounds(int distance) {
+        // new_longitude = longitude + (dx / r_earth) * (180 / pi) / cos(latitude * pi/180);
+        // r_earth = 6378km = 6378 000m
+        double r_earth = 6378000;
+        double longBound = (distance/r_earth) * (180/PI) / cos(PI/180);
+        return longBound;
     }
 
     private void readFirestoreData() {
