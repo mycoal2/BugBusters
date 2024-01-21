@@ -6,19 +6,16 @@ import static java.lang.Math.cos;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.annotation.SuppressLint;
 import android.app.TimePickerDialog;
-import android.content.Intent;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
-
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -28,19 +25,17 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
-import com.google.android.libraries.places.api.net.PlacesClient;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import java.util.Arrays;
 import java.util.concurrent.Executor;
@@ -63,6 +58,15 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
     private SupportMapFragment mapFragment;
     private String currentNormValue;
 
+    private Boolean isRequestIn = false;
+    private FloatingActionButton fab;
+    private FloatingActionButton fab2;
+
+    private Double latitude;
+    private Double longitude;
+    boolean toggle = true;
+    List<DocumentSnapshot> savedDocument = null;
+
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference myRef = database.getReference("message");
@@ -74,10 +78,59 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
         if(!Places.isInitialized()){
             Places.initialize(getApplicationContext(), "AIzaSyBH5W5rUwIp_pLhoR9eHzu2lM6zJ-XcK-M");
         }
-        PlacesClient placesClient = Places.createClient(this);
         autocompleteFragment = (AutocompleteSupportFragment)
                 getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
         autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME));
+
+        Switch switchMode = findViewById(R.id.toggleRequest);
+        fab = findViewById(R.id.fabButton);
+        fab2 = findViewById(R.id.fabButton2);
+        switchMode.setText("Pickup Bike Availability");
+        switchMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                isRequestIn = true;
+                switchMode.setText("Docking Bike Availability");
+            } else {
+                isRequestIn = false;
+                switchMode.setText("Pickup Bike Availability");
+            }
+        });
+
+            fab.setOnClickListener(v -> {
+                if (latitude != null && longitude != null) {
+                    LatLng currentLocation = new LatLng(latitude, longitude);
+                    myGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 17));
+                }
+
+            });
+            fab2.setOnClickListener(v -> {
+                if(toggle) {
+                    readFirestoreData();
+                } else {
+                    myGoogleMap.clear();
+                    if(savedDocument == null) {
+
+                    } else {
+                        LatLng latLng = new LatLng(latitude, longitude);
+                        myGoogleMap.addMarker(new MarkerOptions().position(latLng));
+                        for (DocumentSnapshot document : savedDocument) {
+                            LatLng latLong = new LatLng(document.getDouble("lat"), document.getDouble("lon"));
+
+                            myGoogleMap.addMarker(new MarkerOptions().
+                                    icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN))
+                                    .position(latLong).title(document.getString("station_name")));
+                            Log.d("TEST4444", document.getId() + " => " + document.getData());
+                        }
+                    }
+                }
+                toggle = !toggle;
+
+
+
+            });
+
+
+
 
         FetchWeatherTask();
         setupUI();
@@ -92,13 +145,13 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
         myGoogleMap = googleMap;
         LatLng montreal = new LatLng(45.5017, -73.5673);
         myGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(montreal, 9));
-        readFirestoreData();
+//        readFirestoreData();
 
         View parentLayout = findViewById(android.R.id.content);
         myGoogleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(@NonNull Marker marker) {
-                if(marker.getTitle().isEmpty()) {
+                if(marker.getTitle() == null) {
                     return false;
                 }
                 requestDataPrediction(marker.getPosition());
@@ -128,7 +181,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
 
         int dayOfWeek = adjustDayOfWeekToPython(calendar.get(Calendar.DAY_OF_WEEK));
         int hour = 12; //dummy value incase it crashes in try catch
-
+        
         try {
             String hourText = timeTextView.getText().toString();
             hour = Integer.parseInt(hourText.split(":")[0]);
@@ -157,7 +210,8 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                     for(DataSnapshot ss: snapshot.getChildren()) {
                         if (ss.getKey().equals("cat")) {
                             Log.d("Hello", ss.getValue().toString());
-                            currentNormValue = ss.getValue().toString();
+                            String textToDisplay = isRequestIn ? "Docking Bike Availability: " : "Pickup Bike Availability: ";
+                            currentNormValue =  textToDisplay +  ss.getValue().toString();
                         }
                     }
                     View parentLayout = findViewById(android.R.id.content);
@@ -178,17 +232,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
     private final View.OnClickListener searchButtonOnClickListener = v -> searchButtonClicked();
 
     protected void setupUI() {
-        // Define Button
-        Button buttonMainActivity;
-        buttonMainActivity = findViewById(R.id.buttonMainActivity);
 
-        buttonMainActivity.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                startActivity(intent);
-            }
-        });
 
         timeTextView = findViewById(R.id.timeTextView);
         timeTextView.setOnClickListener(searchButtonOnClickListener);
@@ -212,12 +256,15 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                         addressList = geocoder.getFromLocationName(searchedLocation, 1);
 
                         if (addressList != null && !addressList.isEmpty()) {
+                            toggle = !toggle;
                             Log.d("TEST", "TESTST");
                             address = addressList.get(0);
 
                             Log.d("TEST123", "hello " + address);
                             // Check if the address is not null before using it
                             if (address != null) {
+                                latitude = address.getLatitude();
+                                longitude = address.getLongitude();
                                 myGoogleMap.clear();
                                 LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
                                 myGoogleMap.addMarker(new MarkerOptions().position(latLng));
@@ -254,6 +301,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                                                     if(filteredResults.isEmpty()) {
                                                         Snackbar.make(findViewById(android.R.id.content), "No Stations Nearby", Snackbar.LENGTH_LONG).show();
                                                     } else {
+                                                        savedDocument = filteredResults;
                                                         for (DocumentSnapshot document : filteredResults) {
                                                             LatLng latLong = new LatLng(document.getDouble("lat"), document.getDouble("lon"));
 
@@ -271,7 +319,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                                         });
 
                                 Log.d("test123", "db firestore");
-                                myGoogleMap.addMarker(new MarkerOptions().position(latLng).title("Concordia"));
+                                myGoogleMap.addMarker(new MarkerOptions().position(latLng));
                                 myGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10));
                             } else {
                                 Snackbar.make(findViewById(android.R.id.content), "Invalid address", Snackbar.LENGTH_SHORT).show();
@@ -313,26 +361,14 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
         TimePickerDialog timePickerDialog = new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
             @Override
             public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                timeTextView.setText(hourOfDay + ":" + minute);
+                timeTextView.setText(hourOfDay + ":" + String.format("%02d", minute));
             }
         }, currentHour, currentMin, true);
 
         timePickerDialog.setTitle("Select Time");
         timePickerDialog.show();
     }
-
-    private void LoadBixiStations() {
-        BixiStationGenerator bixiStationGenerator = new BixiStationGenerator();
-        List<BixiSation> bixiSationList = bixiStationGenerator.getBixiStations();
-
-        for(BixiSation bixiSation : bixiSationList) {
-            LatLng latLng = new LatLng(bixiSation.getLatitude(), bixiSation.getLongitude());
-            myGoogleMap.addMarker(new MarkerOptions()
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE))
-                    .position(latLng)
-                    .title(bixiSation.getIntersectionName()));
-        }
-    }
+    
     private void FetchWeatherTask() {
         Executor executor = Executors.newFixedThreadPool(2);
         executor.execute(new Runnable() {
@@ -398,18 +434,11 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                                 // Check if lat and lng are not null before using them
                                 if (lat != null && lng != null) {
                                     LatLng latLng = new LatLng(lat, lng);
-                                    //this works, just uncomment it
-//                                    myGoogleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-//                                        @Override
-//                                        public boolean onMarkerClick(com.google.android.gms.maps.model.Marker marker) {
-//
-//                                        }
-//                                    });
-//                                    myGoogleMap.addMarker(new MarkerOptions()
-//                                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE))
-//                                            .position(latLng)
-//                                            .title(stationName)
-//                                    );
+                                    myGoogleMap.addMarker(new MarkerOptions()
+                                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE))
+                                            .position(latLng)
+                                            .title(stationName)
+                                    );
                                 } else {
                                     Log.w(TAG, "Latitude or Longitude is null for document " + document.getId());
                                 }

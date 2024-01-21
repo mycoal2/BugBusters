@@ -10,7 +10,9 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="16dp">
+        android:padding="16dp"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="97dp">
 
         <!-- Header Bar -->
         <RelativeLayout
@@ -22,19 +24,19 @@
                 android:id="@+id/appLogo"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:src="@drawable/ic_ebike"
+                android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
-                android:layout_alignParentStart="true"/>
+                android:src="@drawable/ic_ebike" />
 
             <TextView
                 android:id="@+id/appTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="My Awesome App"
-                android:textSize="18sp"
                 android:layout_centerVertical="true"
+                android:layout_marginStart="8dp"
                 android:layout_toEndOf="@+id/appLogo"
-                android:layout_marginStart="8dp"/>
+                android:text="BixiSense"
+                android:textSize="18sp" />
         </RelativeLayout>
 
         <!-- Main Content Area -->
@@ -51,9 +53,9 @@
             <!-- Action Button -->
             <fragment
                 android:id="@+id/autocomplete_fragment"
+                android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
                 android:layout_below="@id/mainContentLayout" />
 
             <LinearLayout
@@ -69,13 +71,20 @@
                     android:text="TextView"
                     android:textSize="24sp" />
 
-                <Button
-                    android:id="@+id/searchButton"
-                    android:layout_width="116dp"
+                <Switch
+                    android:id="@+id/toggleRequest"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
                     android:layout_weight="1"
-                    android:text="Search" />
+                    android:text="Switch" />
+
+                <!--                <Button-->
+                <!--                    android:id="@+id/searchButton"-->
+                <!--                    android:layout_width="116dp"-->
+                <!--                    android:layout_height="wrap_content"-->
+                <!--                    android:layout_marginTop="8dp"-->
+                <!--                    android:layout_weight="1"-->
+                <!--                    android:text="Search" />-->
 
             </LinearLayout>
 
@@ -88,41 +97,38 @@
         </LinearLayout>
 
         <!-- Floating Action Button (FAB) -->
+
+        <!-- Footer Bar -->
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabButton2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginEnd="300dp"
+            android:layout_marginBottom="68dp"
+            android:backgroundTint="@color/colorAccent"
+            android:src="@drawable/baseline_emergency_share_24" />
+
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fabButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_alignParentBottom="true"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="16dp"
-            android:src="@drawable/ic_ebike"
-            android:backgroundTint="@color/colorAccent"/>
+            android:layout_marginEnd="22dp"
+            android:layout_marginBottom="68dp"
+            android:backgroundTint="@color/colorAccent"
+            android:src="@drawable/icons8_gps_48" />
 
-        <!-- Footer Bar -->
         <LinearLayout
             android:id="@+id/footerLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_marginTop="16dp"
-            android:orientation="horizontal">
-
-            <!-- Bottom Navigation Buttons -->
-            <Button
-                android:id="@+id/buttonMainActivity"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="buttonMainActivity"/>
-
-            <Button
-                android:id="@+id/bottomButton2"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Tab 2"/>
-        </LinearLayout>
+            android:orientation="horizontal"/>
 
     </RelativeLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
