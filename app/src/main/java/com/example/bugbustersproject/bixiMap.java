@@ -4,6 +4,7 @@ import static com.android.volley.VolleyLog.TAG;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.location.Address;
@@ -45,7 +46,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -55,6 +55,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
     private GoogleMap myGoogleMap;
     private AutocompleteSupportFragment autocompleteFragment;
     private SupportMapFragment mapFragment;
+    private String currentNormValue;
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -79,20 +80,84 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
         mapFragment.getMapAsync(this);
 
     }
+    @SuppressLint("PotentialBehaviorOverride")
     @Override
     public void onMapReady(GoogleMap googleMap) {
         myGoogleMap = googleMap;
-//        LoadBixiStations();
         readFirestoreData();
 
         View parentLayout = findViewById(android.R.id.content);
         myGoogleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(@NonNull Marker marker) {
-                String myString = marker.getPosition().latitude + ", " + marker.getPosition().longitude;
-                Snackbar snackbar = Snackbar.make(parentLayout, marker.getTitle(), Snackbar.LENGTH_LONG);
+                if(marker.getTitle().isEmpty()) {
+                    return false;
+                }
+                requestDataPrediction(marker.getPosition());
+                fetchDataPrediction();
+
+                Snackbar snackbar = Snackbar.make(parentLayout, currentNormValue, Snackbar.LENGTH_LONG);
                 snackbar.show();
+
                 return false;
+            }
+        });
+    }
+
+    private int adjustDayOfWeekToPython(int dayOfWeek) {
+        if (dayOfWeek == 1) {
+            return 6;
+        }
+        return dayOfWeek - 2;
+    }
+
+    private void requestDataPrediction(LatLng position) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.get(Calendar.DAY_OF_WEEK);
+
+        //TODO move to not create reference on every click
+        DatabaseReference databaseReference = database.getReference("/request/information");
+
+        int dayOfWeek = adjustDayOfWeekToPython(calendar.get(Calendar.DAY_OF_WEEK));
+        String ohur = timeTextView.getText().toString();
+        int hour = Integer.parseInt(ohur.split(":")[0]);
+
+        databaseReference.child("day_of_week").setValue(dayOfWeek).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+        databaseReference.child("hour").setValue(hour).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+        databaseReference.child("lat").setValue(position.latitude).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+        databaseReference.child("lon").setValue(position.longitude).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+        databaseReference.child("month").setValue(6).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+        //TODO add switch mode
+        databaseReference.child("is_incoming_bike").setValue(true).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+
+
+        DatabaseReference ref = database.getReference("/request");
+        ref.child("request_in").setValue(true).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+    }
+
+    private void fetchDataPrediction() {
+        DatabaseReference databaseReference = database.getReference("/request/information_out");
+        databaseReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                try {
+                    for(DataSnapshot ss: snapshot.getChildren()) {
+                        if (ss.getKey().equals("cat")) {
+                            Log.d("Hello", ss.getValue().toString());
+                            currentNormValue = ss.getValue().toString();
+                        }
+                    }
+                    View parentLayout = findViewById(android.R.id.content);
+                    Snackbar snackbar = Snackbar.make(parentLayout, currentNormValue, Snackbar.LENGTH_LONG);
+                    snackbar.show();
+                } catch (Exception e) {
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
             }
         });
     }
@@ -108,17 +173,12 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(intent);
-                //readFirestoreData();
-//                addRTData();
-//                readRTData();
             }
         });
 
-        Button searchButton = findViewById(R.id.searchButton);
-
         timeTextView = findViewById(R.id.timeTextView);
-
         timeTextView.setOnClickListener(searchButtonOnClickListener);
+        
         Calendar currentTime = Calendar.getInstance();
         String timeString = currentTime.get(Calendar.HOUR_OF_DAY) + ":" + String.format("%02d", currentTime.get(Calendar.MINUTE));
         timeTextView.setText(timeString);
