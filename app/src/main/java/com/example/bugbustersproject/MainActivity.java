@@ -19,6 +19,8 @@ import android.widget.Button;
         // Define Button
         Button buttonTestPage;
         buttonTestPage = findViewById(R.id.buttonTestPage);
+        Button buttonMapRoutes;
+        buttonMapRoutes = findViewById(R.id.buttonMapRoutes);
 
 
         buttonTestPage.setOnClickListener(new View.OnClickListener() {
@@ -26,6 +28,14 @@ import android.widget.Button;
             public void onClick(View v) {
                 // Change Page
                 Intent intent = new Intent(getApplicationContext(), buttonTestPage.class);
+                startActivity(intent);
+            }
+        });
+        buttonMapRoutes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Change Page
+                Intent intent = new Intent(getApplicationContext(), mapRoutes.class);
                 startActivity(intent);
             }
         });
