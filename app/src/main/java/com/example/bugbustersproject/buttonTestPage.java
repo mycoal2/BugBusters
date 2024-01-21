@@ -18,11 +18,13 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
 import java.util.Calendar;
+import java.util.List;
 
 public class buttonTestPage extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -46,6 +48,7 @@ public class buttonTestPage extends AppCompatActivity implements OnMapReadyCallb
     public void onMapReady(GoogleMap googleMap) {
         // Customize the map if needed
         myGoogleMap = googleMap;
+        LoadBixiStations();
     }
 
     private final View.OnClickListener searchButtonOnClickListener = v -> searchButtonClicked();
@@ -93,7 +96,7 @@ public class buttonTestPage extends AppCompatActivity implements OnMapReadyCallb
 
                     LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
                     myGoogleMap.addMarker(new MarkerOptions().position(latLng));
-                    myGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10));
+                    myGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
                 }
                 return false;
             }
@@ -126,5 +129,17 @@ public class buttonTestPage extends AppCompatActivity implements OnMapReadyCallb
 
         timePickerDialog.setTitle("Select Time");
         timePickerDialog.show();
+    }
+
+    private void LoadBixiStations() {
+        BixiStationGenerator bixiStationGenerator = new BixiStationGenerator();
+        List<BixiSation> bixiSationList = bixiStationGenerator.getBixiStations();
+
+        for(BixiSation bixiSation : bixiSationList) {
+            LatLng latLng = new LatLng(bixiSation.getLatitude(), bixiSation.getLongitude());
+            myGoogleMap.addMarker(new MarkerOptions()
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE))
+                    .position(latLng));
+        }
     }
 }
