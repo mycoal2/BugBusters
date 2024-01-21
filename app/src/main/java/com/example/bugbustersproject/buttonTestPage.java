@@ -20,6 +20,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
@@ -69,6 +70,17 @@ public class buttonTestPage extends AppCompatActivity implements OnMapReadyCallb
         // Customize the map if needed
         myGoogleMap = googleMap;
         LoadBixiStations();
+
+        View parentLayout = findViewById(android.R.id.content);
+        myGoogleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(@NonNull Marker marker) {
+                String myString = marker.getPosition().latitude + ", " + marker.getPosition().longitude;
+                Snackbar snackbar = Snackbar.make(parentLayout, marker.getTitle(), Snackbar.LENGTH_LONG);
+                snackbar.show();
+                return false;
+            }
+        });
     }
 
     private final View.OnClickListener searchButtonOnClickListener = v -> searchButtonClicked();
@@ -77,7 +89,6 @@ public class buttonTestPage extends AppCompatActivity implements OnMapReadyCallb
         // Define Button
         Button buttonMainActivity;
         buttonMainActivity = findViewById(R.id.buttonMainActivity);
-
 
         buttonMainActivity.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -180,7 +191,7 @@ public class buttonTestPage extends AppCompatActivity implements OnMapReadyCallb
             myGoogleMap.addMarker(new MarkerOptions()
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE))
                     .position(latLng)
-                    );
+                    .title(bixiSation.getIntersectionName()));
         }
     }
     private void FetchWeatherTask() {
