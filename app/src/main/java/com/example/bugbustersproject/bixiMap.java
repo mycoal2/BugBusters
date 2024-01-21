@@ -81,7 +81,6 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
     }
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        // Customize the map if needed
         myGoogleMap = googleMap;
         LoadBixiStations();
 
@@ -100,14 +99,15 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
     private final View.OnClickListener searchButtonOnClickListener = v -> searchButtonClicked();
 
     protected void setupUI() {
-        // Define Button
         Button buttonMainActivity;
         buttonMainActivity = findViewById(R.id.buttonMainActivity);
 
         buttonMainActivity.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                readFirestoreData();
+                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                startActivity(intent);
+                //readFirestoreData();
 //                addRTData();
 //                readRTData();
             }
@@ -134,25 +134,20 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                     Geocoder geocoder = new Geocoder(getApplicationContext());
 
                     try {
-                        // Perform geocoding
                         addressList = geocoder.getFromLocationName(searchedLocation, 1);
 
-                        // Check if the addressList is not empty
                         if (addressList != null && !addressList.isEmpty()) {
                             Log.d("TEST", "TESTST");
                             address = addressList.get(0);
 
-                            // Check if the address is not null before using it
                             if (address != null) {
                                 LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
-                                myGoogleMap.addMarker(new MarkerOptions().position(latLng).title("Concordia"));
-                                myGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10));
+                                myGoogleMap.addMarker(new MarkerOptions().position(latLng));
+                                myGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
                             } else {
-                                // Handle the case where address is null
                                 Snackbar.make(findViewById(android.R.id.content), "Invalid address", Snackbar.LENGTH_SHORT).show();
                             }
                         } else {
-                            // Handle the case where addressList is empty
                             Snackbar.make(findViewById(android.R.id.content), "No address found", Snackbar.LENGTH_SHORT).show();
                         }
 
@@ -160,9 +155,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                         throw new RuntimeException(e);
                     }
 
-                    LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
-                    myGoogleMap.addMarker(new MarkerOptions().position(latLng));
-                    myGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+
                 }
             }
 
@@ -221,15 +214,11 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                         WeatherPopupWindow weatherPopupWindow = new WeatherPopupWindow(bixiMap.this, findViewById(android.R.id.content));
                         WeatherResponse weatherResponse = WeatherService.parseWeatherData(weather);
 
-                        // Update UI based on the parsed data
                         if (weatherResponse != null && weatherResponse.getData() != null && !weatherResponse.getData().isEmpty()) {
                             WeatherResponse.WeatherData weatherData = weatherResponse.getData().get(0);
                             double temperature = weatherData.getTemperature();
                             WeatherResponse.WeatherInfo weatherInfo = weatherData.getWeatherInfo();
 
-                            // Set temperature and description to TextViews
-
-                            // Access the weather icon directly
                             int iconCode = weatherInfo.getCode();
                             weatherPopupWindow.showPopup(iconCode, temperature);
 
@@ -249,6 +238,27 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         if (task.isSuccessful()) {
                             for (QueryDocumentSnapshot document : task.getResult()) {
+                                Double lat = document.getDouble("lat");
+                                Double lng = document.getDouble("lon");
+
+                                // Check if lat and lng are not null before using them
+                                if (lat != null && lng != null) {
+                                    LatLng latLng = new LatLng(lat, lng);
+                                    //this works, just uncomment it
+//                                    myGoogleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+//                                        @Override
+//                                        public boolean onMarkerClick(com.google.android.gms.maps.model.Marker marker) {
+//
+//                                        }
+//                                    });
+                                    myGoogleMap.addMarker(new MarkerOptions()
+                                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE))
+                                            .position(latLng)
+                                    );
+                                } else {
+                                    Log.w(TAG, "Latitude or Longitude is null for document " + document.getId());
+                                }
+
                                 Log.d(TAG, document.getId() + " => " + document.getData());
                             }
                         } else {
@@ -259,6 +269,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
 
 
     }
+
     private void addRTData() {
         // Write a message to the database
         myRef.setValue("Hello, World!");

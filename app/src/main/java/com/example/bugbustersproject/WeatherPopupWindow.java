@@ -25,12 +25,14 @@ public class WeatherPopupWindow {
     private void initPopupWindow() {
         View popupView = LayoutInflater.from(context).inflate(R.layout.activity_weather_popup, null);
         mainActivityView.setVisibility(View.INVISIBLE);
+        mainActivityView.setActivated(false);
         popupWindow = new PopupWindow(
                 popupView,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 true
         );
+        popupWindow.setFocusable(false);
         popupWindow.showAtLocation(mainActivityView, Gravity.CENTER, 0, 0);
 
         Button okButton = popupView.findViewById(R.id.okButton);
@@ -111,6 +113,7 @@ public class WeatherPopupWindow {
 
     public void dismissPopup() {
         mainActivityView.setVisibility(View.VISIBLE);
+        mainActivityView.setActivated(true);
         if (popupWindow != null && popupWindow.isShowing()) {
             popupWindow.dismiss();
         }

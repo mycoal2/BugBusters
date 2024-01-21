@@ -35,6 +35,7 @@ android {
 
 dependencies {
     implementation ("com.google.android.libraries.places:places:3.3.0")
+
     implementation ("com.squareup.okhttp3:okhttp:4.9.1")
     implementation ("com.google.code.gson:gson:2.8.9")
     implementation("com.airbnb.android:lottie:6.3.0")
@@ -48,9 +49,9 @@ dependencies {
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("com.google.firebase:firebase-database:20.3.0")
-    implementation("com.google.firebase:firebase-firestore:24.10.1")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ex t:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    implementation("com.google.firebase:firebase-firestore:24.10.1")
 
 }
