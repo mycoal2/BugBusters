@@ -119,9 +119,14 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
         DatabaseReference databaseReference = database.getReference("/request/information");
 
         int dayOfWeek = adjustDayOfWeekToPython(calendar.get(Calendar.DAY_OF_WEEK));
-        String ohur = timeTextView.getText().toString();
-        int hour = Integer.parseInt(ohur.split(":")[0]);
-
+        int hour = 12; //dummy value incase it crashes in try catch
+        
+        try {
+            String hourText = timeTextView.getText().toString();
+            hour = Integer.parseInt(hourText.split(":")[0]);
+        } catch (Exception e) {
+            Log.d("in catch", "aaaaaaaaaaaaaaaa");
+        }
         databaseReference.child("day_of_week").setValue(dayOfWeek).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
         databaseReference.child("hour").setValue(hour).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
         databaseReference.child("lat").setValue(position.latitude).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
@@ -178,7 +183,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
 
         timeTextView = findViewById(R.id.timeTextView);
         timeTextView.setOnClickListener(searchButtonOnClickListener);
-        
+
         Calendar currentTime = Calendar.getInstance();
         String timeString = currentTime.get(Calendar.HOUR_OF_DAY) + ":" + String.format("%02d", currentTime.get(Calendar.MINUTE));
         timeTextView.setText(timeString);
