@@ -82,7 +82,8 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
     @Override
     public void onMapReady(GoogleMap googleMap) {
         myGoogleMap = googleMap;
-        LoadBixiStations();
+//        LoadBixiStations();
+        readFirestoreData();
 
         View parentLayout = findViewById(android.R.id.content);
         myGoogleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
@@ -119,7 +120,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
 
         timeTextView.setOnClickListener(searchButtonOnClickListener);
         Calendar currentTime = Calendar.getInstance();
-        String timeString = currentTime.get(Calendar.HOUR_OF_DAY) + ":" + currentTime.get(Calendar.MINUTE);
+        String timeString = currentTime.get(Calendar.HOUR_OF_DAY) + ":" + String.format("%02d", currentTime.get(Calendar.MINUTE));
         timeTextView.setText(timeString);
 
         autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
@@ -143,7 +144,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                             if (address != null) {
                                 LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
                                 myGoogleMap.addMarker(new MarkerOptions().position(latLng));
-                                myGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+                                myGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17));
                             } else {
                                 Snackbar.make(findViewById(android.R.id.content), "Invalid address", Snackbar.LENGTH_SHORT).show();
                             }
@@ -175,9 +176,6 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
         Calendar currentTime = Calendar.getInstance();
         int currentHour = currentTime.get(Calendar.HOUR_OF_DAY);
         int currentMin = currentTime.get(Calendar.MINUTE);
-
-        //TODO figure add a zero if single digit
-        String currentTimeString = currentHour + ":" + String.format("%02d", currentMin);
 
         TimePickerDialog timePickerDialog = new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
             @Override
@@ -238,8 +236,10 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         if (task.isSuccessful()) {
                             for (QueryDocumentSnapshot document : task.getResult()) {
+                                String stationName = document.getString("station_name");
                                 Double lat = document.getDouble("lat");
                                 Double lng = document.getDouble("lon");
+
 
                                 // Check if lat and lng are not null before using them
                                 if (lat != null && lng != null) {
@@ -254,6 +254,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                                     myGoogleMap.addMarker(new MarkerOptions()
                                             .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE))
                                             .position(latLng)
+                                            .title(stationName)
                                     );
                                 } else {
                                     Log.w(TAG, "Latitude or Longitude is null for document " + document.getId());
