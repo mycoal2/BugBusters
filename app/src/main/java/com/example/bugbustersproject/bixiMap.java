@@ -184,12 +184,12 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
         int currentMin = currentTime.get(Calendar.MINUTE);
 
         //TODO figure add a zero if single digit
-        String currentTimeString = currentHour + ":" + currentMin;
+        String currentTimeString = currentHour + ":" + String.format("%02d", currentMin);
 
         TimePickerDialog timePickerDialog = new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
             @Override
             public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                timeTextView.setText(hourOfDay + ":" + minute);
+                timeTextView.setText(hourOfDay + ":" + String.format("%02d", minute));
             }
         }, currentHour, currentMin, true);
 
@@ -256,6 +256,8 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                         }
                     }
                 });
+
+
     }
     private void addRTData() {
         // Write a message to the database
