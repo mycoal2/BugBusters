@@ -49,10 +49,12 @@
             <!-- Text Content -->
 
             <!-- Action Button -->
-            <SearchView
-                android:id="@+id/mapSearchView"
+            <fragment
+                android:id="@+id/autocomplete_fragment"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="wrap_content"
+                android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
+                android:layout_below="@id/mainContentLayout" />
 
             <LinearLayout
                 android:layout_width="match_parent"
