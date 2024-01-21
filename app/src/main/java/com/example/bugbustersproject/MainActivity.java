@@ -50,14 +50,21 @@ import java.util.concurrent.Executors;
     protected void setupUI() {
         Button buttonTestPage;
         buttonTestPage = findViewById(R.id.buttonTestPage);
+        Button buttonMapRoutes;
+        buttonMapRoutes = findViewById(R.id.buttonMapRoutes);
 
 
         buttonTestPage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // Change Page
-                Intent intent = new Intent(getApplicationContext(), buttonTestPage.class);
+                Intent intent = new Intent(getApplicationContext(), bixiMap.class);
                 startActivity(intent);
+            }
+        });
+        buttonMapRoutes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
             }
         });
     }
