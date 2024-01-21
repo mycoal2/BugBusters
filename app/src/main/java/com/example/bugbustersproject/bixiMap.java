@@ -30,6 +30,7 @@ import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import java.util.Arrays;
 import java.util.concurrent.Executor;
@@ -51,6 +52,10 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
     private String currentNormValue;
 
     private Boolean isRequestIn = false;
+    private FloatingActionButton fab;
+
+    private Double latitude;
+    private Double longitude;
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -68,6 +73,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
         autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME));
 
         Switch switchMode = findViewById(R.id.toggleRequest);
+        fab = findViewById(R.id.fabButton);
         switchMode.setText("Pickup Bike Availability");
         switchMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
@@ -78,6 +84,18 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                 switchMode.setText("Pickup Bike Availability");
             }
         });
+
+            fab.setOnClickListener(v -> {
+                if (latitude != null && longitude != null) {
+                    LatLng currentLocation = new LatLng(latitude, longitude);
+                    myGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 17));
+                }
+
+            });
+
+
+
+
         FetchWeatherTask();
         setupUI();
         mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -205,6 +223,8 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                             address = addressList.get(0);
 
                             if (address != null) {
+                                latitude = address.getLatitude();
+                                longitude = address.getLongitude();
                                 LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
                                 myGoogleMap.addMarker(new MarkerOptions().position(latLng));
                                 myGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17));
@@ -218,8 +238,6 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-
-
                 }
             }
 
@@ -270,8 +288,6 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
 
                             int iconCode = weatherInfo.getCode();
                             weatherPopupWindow.showPopup(iconCode, temperature);
-
-
                         }
                     }
                 });
@@ -309,33 +325,5 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                         }
                     }
                 });
-
-
     }
-
-    private void addRTData() {
-        // Write a message to the database
-        myRef.setValue("Hello, World!");
-        Log.d(TAG, "helo");
-    }
-    private void readRTData() {
-        // Read from the database
-        myRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                // This method is called once with the initial value and again
-                // whenever data at this location is updated.
-                String value = dataSnapshot.getValue(String.class);
-                Log.d(TAG, "Value is: " + value);
-            }
-            @Override
-            public void onCancelled(DatabaseError error) {
-                // Failed to read value
-                Log.w(TAG, "Failed to read value.", error.toException());
-            }
-        });
-    }
-
-
-
 }
