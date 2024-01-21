@@ -1,5 +1,4 @@
 package com.example.bugbustersproject;
-
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;

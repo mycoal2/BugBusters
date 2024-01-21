@@ -1,9 +1,7 @@
 package com.example.bugbustersproject;
 import static com.android.volley.VolleyLog.TAG;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.annotation.SuppressLint;
 import android.app.TimePickerDialog;
 import android.content.Intent;
@@ -13,9 +11,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
-
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -25,18 +23,15 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
-
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
-import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.material.snackbar.Snackbar;
 import java.util.Arrays;
 import java.util.concurrent.Executor;
@@ -57,6 +52,8 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
     private SupportMapFragment mapFragment;
     private String currentNormValue;
 
+    private Boolean isRequestIn = false;
+
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference myRef = database.getReference("message");
@@ -68,11 +65,21 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
         if(!Places.isInitialized()){
             Places.initialize(getApplicationContext(), "AIzaSyBH5W5rUwIp_pLhoR9eHzu2lM6zJ-XcK-M");
         }
-        PlacesClient placesClient = Places.createClient(this);
         autocompleteFragment = (AutocompleteSupportFragment)
                 getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
         autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME));
 
+        Switch switchMode = findViewById(R.id.toggleRequest);
+        switchMode.setText("Pickup Bike Availability");
+        switchMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                isRequestIn = true;
+                switchMode.setText("Docking Bike Availability");
+            } else {
+                isRequestIn = false;
+                switchMode.setText("Pickup Bike Availability");
+            }
+        });
         FetchWeatherTask();
         setupUI();
         mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -135,7 +142,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
         databaseReference.child("lon").setValue(position.longitude).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
         databaseReference.child("month").setValue(6).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
         //TODO add switch mode
-        databaseReference.child("is_incoming_bike").setValue(true).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+        databaseReference.child("is_incoming_bike").setValue(isRequestIn).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
 
 
         DatabaseReference ref = database.getReference("/request");
@@ -151,7 +158,8 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                     for(DataSnapshot ss: snapshot.getChildren()) {
                         if (ss.getKey().equals("cat")) {
                             Log.d("Hello", ss.getValue().toString());
-                            currentNormValue = ss.getValue().toString();
+                            String textToDisplay = isRequestIn ? "Docking Bike Availability: " : "Pickup Bike Availability: ";
+                            currentNormValue =  textToDisplay +  ss.getValue().toString();
                         }
                     }
                     View parentLayout = findViewById(android.R.id.content);
@@ -197,7 +205,6 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                 List<Address> addressList = null;
                 Address address = null;
 
-                // Check if the location name is not null or empty
                 if (searchedLocation != null && !searchedLocation.isEmpty()) {
                     Geocoder geocoder = new Geocoder(getApplicationContext());
 
@@ -255,18 +262,6 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
         timePickerDialog.show();
     }
 
-    private void LoadBixiStations() {
-        BixiStationGenerator bixiStationGenerator = new BixiStationGenerator();
-        List<BixiSation> bixiSationList = bixiStationGenerator.getBixiStations();
-
-        for(BixiSation bixiSation : bixiSationList) {
-            LatLng latLng = new LatLng(bixiSation.getLatitude(), bixiSation.getLongitude());
-            myGoogleMap.addMarker(new MarkerOptions()
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE))
-                    .position(latLng)
-                    .title(bixiSation.getIntersectionName()));
-        }
-    }
     private void FetchWeatherTask() {
         Executor executor = Executors.newFixedThreadPool(2);
         executor.execute(new Runnable() {
@@ -307,17 +302,8 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                                 Double lat = document.getDouble("lat");
                                 Double lng = document.getDouble("lon");
 
-
-                                // Check if lat and lng are not null before using them
                                 if (lat != null && lng != null) {
                                     LatLng latLng = new LatLng(lat, lng);
-                                    //this works, just uncomment it
-//                                    myGoogleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-//                                        @Override
-//                                        public boolean onMarkerClick(com.google.android.gms.maps.model.Marker marker) {
-//
-//                                        }
-//                                    });
                                     myGoogleMap.addMarker(new MarkerOptions()
                                             .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE))
                                             .position(latLng)
@@ -360,5 +346,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
             }
         });
     }
+
+
 
 }
