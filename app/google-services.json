@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "177782454910",
+    "project_id": "bugbusters-c6a2c",
+    "storage_bucket": "bugbusters-c6a2c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:177782454910:android:0b8a9ba434f1fedca5f62f",
+        "android_client_info": {
+          "package_name": "com.example.bugbustersproject"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAgxdPnQ1MNZbdYAmu4ia1qPb9QzjtA_Mc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
