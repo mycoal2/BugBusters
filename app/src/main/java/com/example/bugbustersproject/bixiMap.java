@@ -7,6 +7,7 @@ import static java.lang.Math.cos;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.location.Address;
@@ -25,6 +26,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
@@ -59,6 +61,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
     private GoogleMap myGoogleMap;
     private AutocompleteSupportFragment autocompleteFragment;
     private SupportMapFragment mapFragment;
+    private String currentNormValue;
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -83,11 +86,93 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
         mapFragment.getMapAsync(this);
 
     }
+    @SuppressLint("PotentialBehaviorOverride")
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        // Customize the map if needed
         myGoogleMap = googleMap;
-        LoadBixiStations();
+        LatLng montreal = new LatLng(45.5017, -73.5673);
+        myGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(montreal, 9));
+        readFirestoreData();
+
+        View parentLayout = findViewById(android.R.id.content);
+        myGoogleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(@NonNull Marker marker) {
+                if(marker.getTitle().isEmpty()) {
+                    return false;
+                }
+                requestDataPrediction(marker.getPosition());
+                fetchDataPrediction();
+
+                Snackbar snackbar = Snackbar.make(parentLayout, currentNormValue, Snackbar.LENGTH_LONG);
+                snackbar.show();
+
+                return false;
+            }
+        });
+    }
+
+    private int adjustDayOfWeekToPython(int dayOfWeek) {
+        if (dayOfWeek == 1) {
+            return 6;
+        }
+        return dayOfWeek - 2;
+    }
+
+    private void requestDataPrediction(LatLng position) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.get(Calendar.DAY_OF_WEEK);
+
+        //TODO move to not create reference on every click
+        DatabaseReference databaseReference = database.getReference("/request/information");
+
+        int dayOfWeek = adjustDayOfWeekToPython(calendar.get(Calendar.DAY_OF_WEEK));
+        int hour = 12; //dummy value incase it crashes in try catch
+
+        try {
+            String hourText = timeTextView.getText().toString();
+            hour = Integer.parseInt(hourText.split(":")[0]);
+        } catch (Exception e) {
+            Log.d("in catch", "aaaaaaaaaaaaaaaa");
+        }
+        databaseReference.child("day_of_week").setValue(dayOfWeek).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+        databaseReference.child("hour").setValue(hour).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+        databaseReference.child("lat").setValue(position.latitude).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+        databaseReference.child("lon").setValue(position.longitude).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+        databaseReference.child("month").setValue(6).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+        //TODO add switch mode
+        databaseReference.child("is_incoming_bike").setValue(true).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+
+
+        DatabaseReference ref = database.getReference("/request");
+        ref.child("request_in").setValue(true).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+    }
+
+    private void fetchDataPrediction() {
+        DatabaseReference databaseReference = database.getReference("/request/information_out");
+        databaseReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                try {
+                    for(DataSnapshot ss: snapshot.getChildren()) {
+                        if (ss.getKey().equals("cat")) {
+                            Log.d("Hello", ss.getValue().toString());
+                            currentNormValue = ss.getValue().toString();
+                        }
+                    }
+                    View parentLayout = findViewById(android.R.id.content);
+                    Snackbar snackbar = Snackbar.make(parentLayout, currentNormValue, Snackbar.LENGTH_LONG);
+                    snackbar.show();
+                } catch (Exception e) {
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
     }
 
     private final View.OnClickListener searchButtonOnClickListener = v -> searchButtonClicked();
@@ -100,19 +185,16 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
         buttonMainActivity.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                readFirestoreData();
-//                addRTData();
-//                readRTData();
+                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                startActivity(intent);
             }
         });
 
-        Button searchButton = findViewById(R.id.searchButton);
-
         timeTextView = findViewById(R.id.timeTextView);
-
         timeTextView.setOnClickListener(searchButtonOnClickListener);
+
         Calendar currentTime = Calendar.getInstance();
-        String timeString = currentTime.get(Calendar.HOUR_OF_DAY) + ":" + currentTime.get(Calendar.MINUTE);
+        String timeString = currentTime.get(Calendar.HOUR_OF_DAY) + ":" + String.format("%02d", currentTime.get(Calendar.MINUTE));
         timeTextView.setText(timeString);
 
         autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
@@ -127,24 +209,28 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                     Geocoder geocoder = new Geocoder(getApplicationContext());
 
                     try {
-                        // Perform geocoding
                         addressList = geocoder.getFromLocationName(searchedLocation, 1);
 
-                        // Check if the addressList is not empty
                         if (addressList != null && !addressList.isEmpty()) {
                             Log.d("TEST", "TESTST");
                             address = addressList.get(0);
+
                             Log.d("TEST123", "hello " + address);
                             // Check if the address is not null before using it
                             if (address != null) {
+                                myGoogleMap.clear();
                                 LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
+                                myGoogleMap.addMarker(new MarkerOptions().position(latLng));
+                                myGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17));
                                 Log.d("TEST234", "LAT - " + address.getLatitude() + " long - " + address.getLongitude());
-                                double latRange = calculateLatBounds(250);
-                                double longRange = calculateLongBounds(250);
+                                double latRange = calculateLatBounds(350);
+                                double longRange = calculateLongBounds(350);
+                                Log.d("lat - long", "lat - " + latRange + " long - " + longRange);
                                 double latUpperBound = address.getLatitude() + latRange;
                                 double latLowerBound = address.getLatitude() - latRange;
                                 double longUpperBound = address.getLongitude() + longRange;
                                 double longLowerBound = address.getLongitude() - longRange;
+                                Log.d("bounds", "latU - " + latUpperBound + "latL -" + latLowerBound + "longU- " + longUpperBound + "longL - " + longLowerBound);
 
                                 db.collection("STATION_REF")
                                         .whereGreaterThanOrEqualTo("lat", latLowerBound).whereLessThan("lat", latUpperBound).get()
@@ -165,9 +251,19 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                                                             filteredResults.add(doc);
                                                         }
                                                     }
-                                                    for (DocumentSnapshot document : filteredResults) {
-                                                        Log.d("TEST4444", document.getId() + " => " + document.getData());
+                                                    if(filteredResults.isEmpty()) {
+                                                        Snackbar.make(findViewById(android.R.id.content), "No Stations Nearby", Snackbar.LENGTH_LONG).show();
+                                                    } else {
+                                                        for (DocumentSnapshot document : filteredResults) {
+                                                            LatLng latLong = new LatLng(document.getDouble("lat"), document.getDouble("lon"));
+
+                                                            myGoogleMap.addMarker(new MarkerOptions().
+                                                                    icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN))
+                                                                    .position(latLong).title(document.getString("station_name")));
+                                                            Log.d("TEST4444", document.getId() + " => " + document.getData());
+                                                        }
                                                     }
+
                                                 } else {
                                                     Log.w("55555", "Error getting documents.", task.getException());
                                                 }
@@ -178,11 +274,9 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                                 myGoogleMap.addMarker(new MarkerOptions().position(latLng).title("Concordia"));
                                 myGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10));
                             } else {
-                                // Handle the case where address is null
                                 Snackbar.make(findViewById(android.R.id.content), "Invalid address", Snackbar.LENGTH_SHORT).show();
                             }
                         } else {
-                            // Handle the case where addressList is empty
                             Snackbar.make(findViewById(android.R.id.content), "No address found", Snackbar.LENGTH_SHORT).show();
                         }
 
@@ -236,7 +330,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
             myGoogleMap.addMarker(new MarkerOptions()
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE))
                     .position(latLng)
-                    );
+                    .title(bixiSation.getIntersectionName()));
         }
     }
     private void FetchWeatherTask() {
@@ -296,6 +390,30 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         if (task.isSuccessful()) {
                             for (QueryDocumentSnapshot document : task.getResult()) {
+                                String stationName = document.getString("station_name");
+                                Double lat = document.getDouble("lat");
+                                Double lng = document.getDouble("lon");
+
+
+                                // Check if lat and lng are not null before using them
+                                if (lat != null && lng != null) {
+                                    LatLng latLng = new LatLng(lat, lng);
+                                    //this works, just uncomment it
+//                                    myGoogleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+//                                        @Override
+//                                        public boolean onMarkerClick(com.google.android.gms.maps.model.Marker marker) {
+//
+//                                        }
+//                                    });
+//                                    myGoogleMap.addMarker(new MarkerOptions()
+//                                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE))
+//                                            .position(latLng)
+//                                            .title(stationName)
+//                                    );
+                                } else {
+                                    Log.w(TAG, "Latitude or Longitude is null for document " + document.getId());
+                                }
+
                                 Log.d(TAG, document.getId() + " => " + document.getData());
                             }
                         } else {
@@ -303,7 +421,10 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                         }
                     }
                 });
+
+
     }
+
     private void addRTData() {
         // Write a message to the database
         myRef.setValue("Hello, World!");
