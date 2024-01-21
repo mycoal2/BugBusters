@@ -81,7 +81,8 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
     @Override
     public void onMapReady(GoogleMap googleMap) {
         myGoogleMap = googleMap;
-        LoadBixiStations();
+        readFirestoreData();
+        //LoadBixiStations();
     }
 
     private final View.OnClickListener searchButtonOnClickListener = v -> searchButtonClicked();
@@ -95,7 +96,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(intent);
-                readFirestoreData();
+                //readFirestoreData();
 //                addRTData();
 //                readRTData();
             }
@@ -226,6 +227,27 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         if (task.isSuccessful()) {
                             for (QueryDocumentSnapshot document : task.getResult()) {
+                                Double lat = document.getDouble("lat");
+                                Double lng = document.getDouble("lon");
+
+                                // Check if lat and lng are not null before using them
+                                if (lat != null && lng != null) {
+                                    LatLng latLng = new LatLng(lat, lng);
+                                    //this works, just uncomment it
+//                                    myGoogleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+//                                        @Override
+//                                        public boolean onMarkerClick(com.google.android.gms.maps.model.Marker marker) {
+//
+//                                        }
+//                                    });
+                                    myGoogleMap.addMarker(new MarkerOptions()
+                                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE))
+                                            .position(latLng)
+                                    );
+                                } else {
+                                    Log.w(TAG, "Latitude or Longitude is null for document " + document.getId());
+                                }
+
                                 Log.d(TAG, document.getId() + " => " + document.getData());
                             }
                         } else {
@@ -234,6 +256,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                     }
                 });
     }
+
     private void addRTData() {
         // Write a message to the database
         myRef.setValue("Hello, World!");
