@@ -17,10 +17,19 @@
         android:theme="@style/Theme.BugBustersProject"
         tools:targetApi="31">
         <activity
-            android:name=".mapRoutes"
+            android:name=".WeatherPopupWindow"
             android:exported="false" />
         <activity
-            android:name=".buttonTestPage"
+            android:name=".SplashScreen"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".bixiMap"
             android:exported="false" />
         <activity
             android:name=".MainActivity"
