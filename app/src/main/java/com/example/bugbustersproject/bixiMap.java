@@ -4,6 +4,7 @@ import static com.android.volley.VolleyLog.TAG;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.location.Address;
@@ -22,6 +23,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
@@ -44,7 +46,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -54,6 +55,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
     private GoogleMap myGoogleMap;
     private AutocompleteSupportFragment autocompleteFragment;
     private SupportMapFragment mapFragment;
+    private String currentNormValue;
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -78,13 +80,93 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
         mapFragment.getMapAsync(this);
 
     }
+    @SuppressLint("PotentialBehaviorOverride")
     @Override
     public void onMapReady(GoogleMap googleMap) {
         myGoogleMap = googleMap;
         LatLng montreal = new LatLng(45.5017, -73.5673);
         myGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(montreal, 9));
         readFirestoreData();
-        //LoadBixiStations();
+
+        View parentLayout = findViewById(android.R.id.content);
+        myGoogleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(@NonNull Marker marker) {
+                if(marker.getTitle().isEmpty()) {
+                    return false;
+                }
+                requestDataPrediction(marker.getPosition());
+                fetchDataPrediction();
+
+                Snackbar snackbar = Snackbar.make(parentLayout, currentNormValue, Snackbar.LENGTH_LONG);
+                snackbar.show();
+
+                return false;
+            }
+        });
+    }
+
+    private int adjustDayOfWeekToPython(int dayOfWeek) {
+        if (dayOfWeek == 1) {
+            return 6;
+        }
+        return dayOfWeek - 2;
+    }
+
+    private void requestDataPrediction(LatLng position) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.get(Calendar.DAY_OF_WEEK);
+
+        //TODO move to not create reference on every click
+        DatabaseReference databaseReference = database.getReference("/request/information");
+
+        int dayOfWeek = adjustDayOfWeekToPython(calendar.get(Calendar.DAY_OF_WEEK));
+        int hour = 12; //dummy value incase it crashes in try catch
+        
+        try {
+            String hourText = timeTextView.getText().toString();
+            hour = Integer.parseInt(hourText.split(":")[0]);
+        } catch (Exception e) {
+            Log.d("in catch", "aaaaaaaaaaaaaaaa");
+        }
+        databaseReference.child("day_of_week").setValue(dayOfWeek).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+        databaseReference.child("hour").setValue(hour).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+        databaseReference.child("lat").setValue(position.latitude).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+        databaseReference.child("lon").setValue(position.longitude).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+        databaseReference.child("month").setValue(6).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+        //TODO add switch mode
+        databaseReference.child("is_incoming_bike").setValue(true).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+
+
+        DatabaseReference ref = database.getReference("/request");
+        ref.child("request_in").setValue(true).addOnSuccessListener(unused -> Log.d("test", "successfully updated!"));
+    }
+
+    private void fetchDataPrediction() {
+        DatabaseReference databaseReference = database.getReference("/request/information_out");
+        databaseReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                try {
+                    for(DataSnapshot ss: snapshot.getChildren()) {
+                        if (ss.getKey().equals("cat")) {
+                            Log.d("Hello", ss.getValue().toString());
+                            currentNormValue = ss.getValue().toString();
+                        }
+                    }
+                    View parentLayout = findViewById(android.R.id.content);
+                    Snackbar snackbar = Snackbar.make(parentLayout, currentNormValue, Snackbar.LENGTH_LONG);
+                    snackbar.show();
+                } catch (Exception e) {
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
     }
 
     private final View.OnClickListener searchButtonOnClickListener = v -> searchButtonClicked();
@@ -98,19 +180,14 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(intent);
-                //readFirestoreData();
-//                addRTData();
-//                readRTData();
             }
         });
 
-        Button searchButton = findViewById(R.id.searchButton);
-
         timeTextView = findViewById(R.id.timeTextView);
-
         timeTextView.setOnClickListener(searchButtonOnClickListener);
+
         Calendar currentTime = Calendar.getInstance();
-        String timeString = currentTime.get(Calendar.HOUR_OF_DAY) + ":" + currentTime.get(Calendar.MINUTE);
+        String timeString = currentTime.get(Calendar.HOUR_OF_DAY) + ":" + String.format("%02d", currentTime.get(Calendar.MINUTE));
         timeTextView.setText(timeString);
 
         autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
@@ -134,7 +211,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                             if (address != null) {
                                 LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
                                 myGoogleMap.addMarker(new MarkerOptions().position(latLng));
-                                myGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+                                myGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17));
                             } else {
                                 Snackbar.make(findViewById(android.R.id.content), "Invalid address", Snackbar.LENGTH_SHORT).show();
                             }
@@ -167,13 +244,10 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
         int currentHour = currentTime.get(Calendar.HOUR_OF_DAY);
         int currentMin = currentTime.get(Calendar.MINUTE);
 
-        //TODO figure add a zero if single digit
-        String currentTimeString = currentHour + ":" + currentMin;
-
         TimePickerDialog timePickerDialog = new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
             @Override
             public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                timeTextView.setText(hourOfDay + ":" + minute);
+                timeTextView.setText(hourOfDay + ":" + String.format("%02d", minute));
             }
         }, currentHour, currentMin, true);
 
@@ -190,7 +264,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
             myGoogleMap.addMarker(new MarkerOptions()
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE))
                     .position(latLng)
-                    );
+                    .title(bixiSation.getIntersectionName()));
         }
     }
     private void FetchWeatherTask() {
@@ -229,8 +303,10 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         if (task.isSuccessful()) {
                             for (QueryDocumentSnapshot document : task.getResult()) {
+                                String stationName = document.getString("station_name");
                                 Double lat = document.getDouble("lat");
                                 Double lng = document.getDouble("lon");
+
 
                                 // Check if lat and lng are not null before using them
                                 if (lat != null && lng != null) {
@@ -245,6 +321,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                                     myGoogleMap.addMarker(new MarkerOptions()
                                             .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE))
                                             .position(latLng)
+                                            .title(stationName)
                                     );
                                 } else {
                                     Log.w(TAG, "Latitude or Longitude is null for document " + document.getId());
@@ -257,6 +334,8 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
                         }
                     }
                 });
+
+
     }
 
     private void addRTData() {
