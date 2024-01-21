@@ -4,13 +4,11 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.annotation.SuppressLint;
 import android.app.TimePickerDialog;
-import android.content.Intent;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -180,16 +178,7 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
     private final View.OnClickListener searchButtonOnClickListener = v -> searchButtonClicked();
 
     protected void setupUI() {
-        Button buttonMainActivity;
-        buttonMainActivity = findViewById(R.id.buttonMainActivity);
 
-        buttonMainActivity.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                startActivity(intent);
-            }
-        });
 
         timeTextView = findViewById(R.id.timeTextView);
         timeTextView.setOnClickListener(searchButtonOnClickListener);
