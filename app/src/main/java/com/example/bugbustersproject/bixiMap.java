@@ -81,6 +81,8 @@ public class bixiMap extends AppCompatActivity implements OnMapReadyCallback {
     @Override
     public void onMapReady(GoogleMap googleMap) {
         myGoogleMap = googleMap;
+        LatLng montreal = new LatLng(45.5017, -73.5673);
+        myGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(montreal, 9));
         readFirestoreData();
         //LoadBixiStations();
     }
