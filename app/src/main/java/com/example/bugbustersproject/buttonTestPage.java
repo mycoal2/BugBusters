@@ -66,7 +66,6 @@ public class buttonTestPage extends AppCompatActivity implements OnMapReadyCallb
     }
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        // Customize the map if needed
         myGoogleMap = googleMap;
         LoadBixiStations();
     }
@@ -74,7 +73,6 @@ public class buttonTestPage extends AppCompatActivity implements OnMapReadyCallb
     private final View.OnClickListener searchButtonOnClickListener = v -> searchButtonClicked();
 
     protected void setupUI() {
-        // Define Button
         Button buttonMainActivity;
         buttonMainActivity = findViewById(R.id.buttonMainActivity);
 
@@ -82,7 +80,6 @@ public class buttonTestPage extends AppCompatActivity implements OnMapReadyCallb
         buttonMainActivity.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Change Page
                 Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(intent);
             }
@@ -109,24 +106,19 @@ public class buttonTestPage extends AppCompatActivity implements OnMapReadyCallb
                     Geocoder geocoder = new Geocoder(getApplicationContext());
 
                     try {
-                        // Perform geocoding
                         addressList = geocoder.getFromLocationName(searchedLocation, 1);
 
-                        // Check if the addressList is not empty
                         if (addressList != null && !addressList.isEmpty()) {
                             address = addressList.get(0);
 
-                            // Check if the address is not null before using it
                             if (address != null) {
                                 LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
                                 myGoogleMap.addMarker(new MarkerOptions().position(latLng));
-                                myGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10));
+                                myGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
                             } else {
-                                // Handle the case where address is null
                                 Snackbar.make(findViewById(android.R.id.content), "Invalid address", Snackbar.LENGTH_SHORT).show();
                             }
                         } else {
-                            // Handle the case where addressList is empty
                             Snackbar.make(findViewById(android.R.id.content), "No address found", Snackbar.LENGTH_SHORT).show();
                         }
 
@@ -134,9 +126,7 @@ public class buttonTestPage extends AppCompatActivity implements OnMapReadyCallb
                         throw new RuntimeException(e);
                     }
 
-                    LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
-                    myGoogleMap.addMarker(new MarkerOptions().position(latLng));
-                    myGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+
                 }
             }
 
@@ -195,15 +185,11 @@ public class buttonTestPage extends AppCompatActivity implements OnMapReadyCallb
                         WeatherPopupWindow weatherPopupWindow = new WeatherPopupWindow(buttonTestPage.this, findViewById(android.R.id.content));
                         WeatherResponse weatherResponse = WeatherService.parseWeatherData(weather);
 
-                        // Update UI based on the parsed data
                         if (weatherResponse != null && weatherResponse.getData() != null && !weatherResponse.getData().isEmpty()) {
                             WeatherResponse.WeatherData weatherData = weatherResponse.getData().get(0);
                             double temperature = weatherData.getTemperature();
                             WeatherResponse.WeatherInfo weatherInfo = weatherData.getWeatherInfo();
 
-                            // Set temperature and description to TextViews
-
-                            // Access the weather icon directly
                             int iconCode = weatherInfo.getCode();
                             weatherPopupWindow.showPopup(iconCode, temperature);
 

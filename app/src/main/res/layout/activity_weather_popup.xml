@@ -1,46 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="center"
-    android:background="#62def8">
+    android:background="#FF6666"
+    android:padding="16dp"
+    ><!-- Bixi theme color -->
 
     <TextView
-        android:id="@+id/tempatureTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="30dp"
-        android:layout_marginEnd="30dp"
-        android:layout_marginTop="30dp"
-        android:textSize="22sp"
-        android:layout_centerHorizontal="true" />
+    android:id="@+id/tempatureTextView"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_centerHorizontal="true"
+    android:padding="8dp"
+    android:textAlignment="center"
+    android:textSize="24sp"
+    android:textColor="#FFFFFF"
+        android:textStyle="bold" />
 
-    <ImageView
-        android:id="@+id/weatherImageView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/tempatureTextView"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="16dp" />
+<ImageView
+android:id="@+id/weatherImageView"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:layout_below="@id/tempatureTextView"
+android:layout_centerHorizontal="true"
+android:layout_marginTop="16dp"
+android:padding="8dp"
+    android:contentDescription="@null" /> <!-- Remove content description for non-essential images -->
 
-    <TextView
-        android:id="@+id/weatherDescriptionTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/weatherImageView"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp" />
+<TextView
+android:id="@+id/weatherDescriptionTextView"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:layout_below="@id/weatherImageView"
+android:layout_centerHorizontal="true"
+android:layout_marginTop="16dp"
+android:padding="8dp"
+android:textColor="#FFFFFF"
+    android:textStyle="italic"></TextView>
 
-    <Button
-        android:id="@+id/okButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/weatherDescriptionTextView"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
-        android:text="OK" />
 
-</RelativeLayout>
+<Button
+android:id="@+id/okButton"
+android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:layout_below="@id/weatherDescriptionTextView"
+android:layout_centerHorizontal="true"
+android:layout_marginTop="16dp"
+android:padding="12dp"
+android:text="OK"
+android:textColor="#FF6666"
+    android:background="#FFFFFF"
+    android:radius="8dp"
+    android:elevation="4dp"
+    android:textStyle="bold" />
+
+    </RelativeLayout>

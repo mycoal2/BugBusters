@@ -34,6 +34,7 @@ android {
 
 dependencies {
     implementation ("com.google.android.libraries.places:places:3.3.0")
+
     implementation ("com.squareup.okhttp3:okhttp:4.9.1")
     implementation ("com.google.code.gson:gson:2.8.9")
     implementation("com.airbnb.android:lottie:6.3.0")
