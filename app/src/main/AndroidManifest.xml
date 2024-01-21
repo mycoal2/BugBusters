@@ -29,7 +29,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".buttonTestPage"
+            android:name=".bixiMap"
             android:exported="false" />
         <activity
             android:name=".MainActivity"
