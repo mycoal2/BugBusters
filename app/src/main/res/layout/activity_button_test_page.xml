@@ -101,6 +101,17 @@
         <!-- Footer Bar -->
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabButton2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginEnd="300dp"
+            android:layout_marginBottom="68dp"
+            android:backgroundTint="@color/colorAccent"
+            android:src="@drawable/baseline_emergency_share_24" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fabButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -109,7 +120,7 @@
             android:layout_marginEnd="22dp"
             android:layout_marginBottom="68dp"
             android:backgroundTint="@color/colorAccent"
-            android:src="@drawable/ic_ebike" />
+            android:src="@drawable/icons8_gps_48" />
 
         <LinearLayout
             android:id="@+id/footerLayout"
@@ -117,23 +128,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_marginTop="16dp"
-            android:orientation="horizontal">
-
-            <!-- Bottom Navigation Buttons -->
-            <Button
-                android:id="@+id/buttonMainActivity"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="buttonMainActivity" />
-
-            <Button
-                android:id="@+id/bottomButton2"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Tab 2" />
-        </LinearLayout>
+            android:orientation="horizontal"/>
 
     </RelativeLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

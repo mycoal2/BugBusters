@@ -49,9 +49,6 @@ import java.util.concurrent.Executors;
     protected void setupUI() {
         Button buttonTestPage;
         buttonTestPage = findViewById(R.id.buttonTestPage);
-        Button buttonMapRoutes;
-        buttonMapRoutes = findViewById(R.id.buttonMapRoutes);
-
 
         buttonTestPage.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -61,11 +58,7 @@ import java.util.concurrent.Executors;
                 startActivity(intent);
             }
         });
-        buttonMapRoutes.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-            }
-        });
+
     }
 
 
